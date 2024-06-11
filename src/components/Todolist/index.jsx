@@ -1,50 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-
 const TodoApp = () => {
-  //состояния
   const [todos, setTodos] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [isManualUpdate, setIsManualUpdate] = useState(false);
   const titleRef = useRef(null);
   const textRef = useRef(null);
 
-  // загрузка localStorage
+  // Загрузка данных из localStorage при монтировании компонента
   useEffect(() => {
     const storedTodos = localStorage.getItem('todos');
     if (storedTodos) {
       setTodos(JSON.parse(storedTodos));
     }
-    console.log("Loaded todos:", storedTodos);
   }, []);
 
-  
-  // useEffect(() => {
-  //   console.log("Saving todos:", todos);
-  //   localStorage.setItem('todos', JSON.stringify(todos));
-  // }, [todos]);
+  // Сохранение данных в localStorage при изменении todos, только если isManualUpdate true
+  useEffect(() => {
+    if (isManualUpdate) {
+      localStorage.setItem('todos', JSON.stringify(todos));
+      setIsManualUpdate(false); // Сброс флага после сохранения
+    }
+  }, [todos, isManualUpdate]);
 
   const handleAddTodo = () => {
     const title = titleRef.current.value;
     const text = textRef.current.value;
     if (title.trim() && text.trim()) {
       if (editingIndex !== null) {
-      
         const updatedTodos = todos.map((todo, index) =>
           index === editingIndex ? { title, text } : todo
-     
-    
         );
- 
         setTodos(updatedTodos);
         setEditingIndex(null);
-        
       } else {
-        console.log("Saving todos:", todos);
-        
         setTodos([...todos, { title, text }]);
-      
       }
-      localStorage.setItem('todos', JSON.stringify(todos));
+      setIsManualUpdate(true); // Установить флаг для ручного обновления
       titleRef.current.value = '';
       textRef.current.value = '';
     }
@@ -58,6 +50,7 @@ const TodoApp = () => {
 
   const handleDeleteTodo = (index) => {
     setTodos(todos.filter((_, i) => i !== index));
+    setIsManualUpdate(true); // Установить флаг для ручного обновления
   };
 
   return (
